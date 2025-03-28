@@ -13,7 +13,6 @@ export default async function CoursePage({
 }) {
   const { courseId } = await params
   const course = await getCourse(courseId)
-
   if (course == null) return notFound()
 
   return (
@@ -21,7 +20,7 @@ export default async function CoursePage({
       <PageHeader className="mb-2" title={course.name} />
       <p className="text-muted-foreground">{course.description}</p>
     </div>
-  )
+  );
 }
 
 async function getCourse(id: string) {

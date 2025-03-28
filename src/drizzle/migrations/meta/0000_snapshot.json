@@ -1,5 +1,5 @@
 {
-  "id": "d4730870-f365-4597-857f-fb8168440798",
+  "id": "9bef0dea-85ec-4548-a19c-af2c78a4d655",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -220,12 +220,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "youtubeVideoId": {
-          "name": "youtubeVideoId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         },
         "order": {
           "name": "order",
@@ -466,8 +460,14 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "clerkUserId": {
-          "name": "clerkUserId",
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerAccountId": {
+          "name": "providerAccountId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -523,11 +523,19 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_clerkUserId_unique": {
-          "name": "users_clerkUserId_unique",
+        "users_providerAccountId_unique": {
+          "name": "users_providerAccountId_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "clerkUserId"
+            "providerAccountId"
+          ]
+        },
+        "provider_and_providerAccountId": {
+          "name": "provider_and_providerAccountId",
+          "nullsNotDistinct": false,
+          "columns": [
+            "provider",
+            "providerAccountId"
           ]
         }
       },

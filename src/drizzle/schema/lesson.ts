@@ -12,7 +12,6 @@ export const LessonTable = pgTable("lessons", {
   id,
   name: text().notNull(),
   description: text(),
-  youtubeVideoId: text().notNull(),
   order: integer().notNull(),
   status: lessonStatusEnum().notNull().default("private"),
   sectionId: uuid()

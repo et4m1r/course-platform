@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { CheckCircle2Icon, VideoIcon } from "lucide-react"
+import { CheckCircle2Icon } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
@@ -59,7 +59,6 @@ export function CoursePageClient({
                 )}
               >
                 <Link href={`/courses/${course.id}/lessons/${lesson.id}`}>
-                  <VideoIcon />
                   {lesson.name}
                   {lesson.isComplete && (
                     <CheckCircle2Icon className="ml-auto" />

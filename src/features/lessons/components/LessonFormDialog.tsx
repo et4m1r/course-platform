@@ -23,7 +23,6 @@ export function LessonFormDialog({
     id: string
     name: string
     status: LessonStatus
-    youtubeVideoId: string
     description: string | null
     sectionId: string
   }

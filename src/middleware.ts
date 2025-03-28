@@ -1,71 +1,60 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
-import arcjet, { detectBot, shield, slidingWindow } from "@arcjet/next"
-import { env } from "./data/env/server"
-import { setUserCountryHeader } from "./lib/userCountryHeader"
-import { NextResponse } from "next/server"
+import {withAuth} from 'next-auth/middleware';
+import {NextResponse} from 'next/server';
+import {getToken} from 'next-auth/jwt';
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/api(.*)",
-  "/courses/:courseId/lessons/:lessonId",
-  "/products(.*)",
-])
+const publicRoutes = [
+    '/',
+    '/sign-in',
+    '/sign-up',
+    '/api(.*)', // Match all /api routes
+    '/courses/[courseId]/lessons/[lessonId]',
+    '/products(.*)',
+    "/courses",
+];
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)"])
+const adminRoutes = ['/admin(.*)'];
 
-const aj = arcjet({
-  key: env.ARCJET_KEY,
-  rules: [
-    shield({ mode: "LIVE" }),
-    detectBot({
-      mode: "LIVE",
-      allow: ["CATEGORY:SEARCH_ENGINE", "CATEGORY:MONITOR", "CATEGORY:PREVIEW"],
-    }),
-    slidingWindow({
-      mode: "LIVE",
-      interval: "1m",
-      max: 100,
-    }),
-  ],
-})
+export default withAuth(
+    async function middleware(req) {
+        const pathname = req.nextUrl.pathname;
+        const isPublic = publicRoutes.some((route) =>
+            pathname.match(new RegExp(`^${route}$`))
+        );
+        const isAdmin = adminRoutes.some((route) =>
+            pathname.match(new RegExp(`^${route}$`))
+        );
 
-export default clerkMiddleware(async (auth, req) => {
-  const decision = await aj.protect(
-    env.TEST_IP_ADDRESS
-      ? { ...req, ip: env.TEST_IP_ADDRESS, headers: req.headers }
-      : req
-  )
+        const token = await getToken({req});
+        if (!isPublic) {
+            if (!token) {
+                // Redirect to sign-in if not authenticated and not on a public route
+                const signInUrl = new URL('/sign-in', req.nextUrl);
+                signInUrl.searchParams.set('callbackUrl', pathname);
+                return NextResponse.redirect(signInUrl);
+            }
+        }
 
-  if (decision.isDenied()) {
-    return new NextResponse(null, { status: 403 })
-  }
+        if (isAdmin) {
+            // Assuming you've added a 'role' property to your NextAuth session
+            if (token?.role !== 'admin') {
+                return new NextResponse(null, {status: 404});
+            }
+        }
 
-  if (isAdminRoute(req)) {
-    const user = await auth.protect()
-    if (user.sessionClaims.role !== "admin") {
-      return new NextResponse(null, { status: 404 })
+        return NextResponse.next();
+    },
+    {
+        pages: {
+            signIn: '/sign-in', // Custom sign-in page
+        },
     }
-  }
-
-  if (!isPublicRoute(req)) {
-    await auth.protect()
-  }
-
-  if (!decision.ip.isVpn() && !decision.ip.isProxy()) {
-    const headers = new Headers(req.headers)
-    setUserCountryHeader(headers, decision.ip.country)
-
-    return NextResponse.next({ request: { headers } })
-  }
-})
+);
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
+    matcher: [
+        // Skip Next.js internals and all static files, unless found in search params
+        "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+        // Always run for API routes
+        "/(api|trpc)(.*)",
+    ],
 }

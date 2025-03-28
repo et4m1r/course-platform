@@ -2,7 +2,7 @@
 
 import { stripeServerClient } from "@/services/stripe/stripeServer"
 import { canRefundPurchases } from "../permissions/products"
-import { getCurrentUser } from "@/services/clerk"
+import { getCurrentUser } from "@/services/auth"
 import { db } from "@/drizzle/db"
 import { updatePurchase } from "../db/purchases"
 import { revokeUserCourseAccess } from "@/features/courses/db/userCourseAcccess"
